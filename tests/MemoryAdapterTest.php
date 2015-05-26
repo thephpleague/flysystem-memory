@@ -95,14 +95,14 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $adapter = MemoryAdapter::createFromFilesystem(new Filesystem(new Local(__DIR__)));
         $contents = $adapter->listContents('', true);
         $this->assertSame(2, count($contents));
-        $this->assertSame('tmp', $contents[0]['path']);
-        $this->assertSame('MemoryAdapterTest.php', $contents[1]['path']);
+        $this->assertTrue($contents[0]['path'] === 'tmp' || $contents[0]['path'] === 'MemoryAdapterTest.php');
+        $this->assertTrue($contents[1]['path'] === 'tmp' || $contents[1]['path'] === 'MemoryAdapterTest.php');
 
         $adapter = MemoryAdapter::createFromPath(__DIR__);
         $contents = $adapter->listContents('', true);
         $this->assertSame(2, count($contents));
-        $this->assertSame('tmp', $contents[0]['path']);
-        $this->assertSame('MemoryAdapterTest.php', $contents[1]['path']);
+        $this->assertTrue($contents[0]['path'] === 'tmp' || $contents[0]['path'] === 'MemoryAdapterTest.php');
+        $this->assertTrue($contents[1]['path'] === 'tmp' || $contents[1]['path'] === 'MemoryAdapterTest.php');
 
         rmdir(__DIR__ . '/tmp');
     }
