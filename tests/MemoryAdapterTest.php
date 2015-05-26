@@ -2,7 +2,9 @@
 
 namespace Twistor\Tests;
 
+use League\Flysystem\Adapter\Local;
 use League\Flysystem\Config;
+use League\Flysystem\Filesystem;
 use Twistor\Flysystem\MemoryAdapter;
 
 class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
@@ -84,11 +86,32 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertSame([['type' => 'dir', 'path' => 'pics']], $adapter->listContents('', true));
 
         $this->assertTrue($adapter->deleteDir(''));
+    }
 
-        $this->assertSame('yay', $adapter->createDir('yay', new Config())['path']);
-        $this->assertSame('public', $adapter->getVisibility('yay')['visibility']);
-        $this->assertSame('private', $adapter->setVisibility('yay', 'private')['visibility']);
-        $this->assertSame('yay', $adapter->createDir('yay', new Config())['path']);
-        $this->assertSame('private', $adapter->getVisibility('yay')['visibility']);
+    public function testCreateFromFilesystem()
+    {
+        mkdir(__DIR__ . '/tmp');
+
+        $adapter = MemoryAdapter::createFromFilesystem(new Filesystem(new Local(__DIR__)));
+        $contents = $adapter->listContents('', true);
+        $this->assertSame(2, count($contents));
+        $this->assertSame('tmp', $contents[0]['path']);
+        $this->assertSame('MemoryAdapterTest.php', $contents[1]['path']);
+
+        $adapter = MemoryAdapter::createFromPath(__DIR__);
+        $contents = $adapter->listContents('', true);
+        $this->assertSame(2, count($contents));
+        $this->assertSame('tmp', $contents[0]['path']);
+        $this->assertSame('MemoryAdapterTest.php', $contents[1]['path']);
+
+        rmdir(__DIR__ . '/tmp');
+    }
+
+    /**
+     * @expectedException LogicException
+     */
+    public function testCreateFromFilesystemFail()
+    {
+        MemoryAdapter::createFromPath('does not exist');
     }
 }

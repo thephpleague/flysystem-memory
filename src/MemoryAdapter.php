@@ -3,7 +3,11 @@
 namespace Twistor\Flysystem;
 
 use League\Flysystem\AdapterInterface;
+use League\Flysystem\Adapter\Local;
 use League\Flysystem\Config;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemInterface;
+use League\Flysystem\Plugin\ListWith;
 use League\Flysystem\Util;
 
 /**
@@ -18,7 +22,51 @@ class MemoryAdapter implements AdapterInterface
      *
      * @var array
      */
-    protected $storage = ['' => ['type' => 'dir', 'visibility' => 'public']];
+    protected $storage = ['' => ['type' => 'dir']];
+
+    /**
+     * Creates a Memory adapter from a filesystem folder.
+     *
+     * @param string $path The path to the folder.
+     *
+     * @return \Twistor\Flysystem\MemoryAdapter A new memory adapter.
+     */
+    public static function createFromPath($path)
+    {
+        if (!is_dir($path) || !is_readable($path)) {
+            throw new \LogicException(sprintf('%s does not exist or is not readable.', $path));
+        }
+
+        return static::createFromFilesystem(new Filesystem(new Local($path)));
+    }
+
+    /**
+     * Creates a Memory adapter from a Flysystem filesystem.
+     *
+     * @param \League\Flysystem\FilesystemInterface $filesystem The Flysystem filesystem.
+     *
+     * @return \Twistor\Flysystem\MemoryAdapter A new memory adapter.
+     */
+    public static function createFromFilesystem(FilesystemInterface $filesystem)
+    {
+        $filesystem->addPlugin(new ListWith());
+
+        $adapter = new static();
+        $config = new Config();
+
+        foreach ($filesystem->listWith(['timestamp', 'visibility'], '', true) as $meta) {
+            if ($meta['type'] === 'file') {
+                $adapter->write($meta['path'], $filesystem->read($meta['path']), $config);
+                $adapter->setVisibility($meta['path'], $meta['visibility']);
+                $adapter->setTimestamp($meta['path'], $meta['timestamp']);
+
+            } else {
+                $adapter->createDir($meta['path'], $config);
+            }
+        }
+
+        return $adapter;
+    }
 
     /**
      * {@inheritdoc}
@@ -54,11 +102,6 @@ class MemoryAdapter implements AdapterInterface
         }
 
         $this->storage[$dirname]['type'] = 'dir';
-        $this->storage[$dirname]['visibility'] = AdapterInterface::VISIBILITY_PUBLIC;
-
-        if ($visibility = $config->get('visibility')) {
-            $this->setVisibility($dirname, $visibility);
-        }
 
         return $this->getMetadata($dirname);
     }
@@ -149,7 +192,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getVisibility($path)
     {
-        if (!$this->has($path)) {
+        if (!$this->hasFile($path)) {
             return false;
         }
 
@@ -231,7 +274,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function setVisibility($path, $visibility)
     {
-        if (!$this->has($path)) {
+        if (!$this->hasFile($path)) {
             return false;
         }
 
@@ -351,5 +394,16 @@ class MemoryAdapter implements AdapterInterface
     protected function hasFile($path)
     {
         return $this->has($path) && $this->storage[$path]['type'] === 'file';
+    }
+
+    /**
+     * Sets the timestamp of a file.
+     *
+     * @param string $path
+     * @param int    $timestamp
+     */
+    protected function setTimestamp($path, $timestamp)
+    {
+        $this->storage[$path]['timestamp'] = (int) $timestamp;
     }
 }
