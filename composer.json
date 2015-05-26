@@ -1,0 +1,24 @@
+{
+    "name": "twistor/flysystem-memory-adapter",
+    "type": "library",
+    "description": "An in-memory adapter for Flysystem.",
+    "license": "MIT",
+    "homepage": "http://github.com/twistor/flysystem-memory-adapter",
+    "authors": [
+        {
+            "name": "Chris Leppanen",
+            "email": "chris.leppanen@gmail.com"
+        }
+    ],
+    "require": {
+        "league/flysystem": "~1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Twistor\\Flysystem\\": "src/"
+        }
+    }
+}
