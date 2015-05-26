@@ -6,6 +6,10 @@
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
 [![Packagist Version](https://img.shields.io/packagist/v/twistor/flysystem-memory-adapter.svg?style=flat-square)](https://packagist.org/packages/twistor/flysystem-memory-adapter)
 
+This adapter keeps a filesystem in memory. It should be useful for test,
+allowing you to have a working filesystem without having to clean up after each
+test run.
+
 ## Installation
 
 ```
@@ -15,5 +19,12 @@ composer require twistor/flysystem-memory-adapter
 ## Usage
 
 ```php
+use League\Flysystem\Filesystem;
+use Twistor\Flysystem\MemoryAdapter;
 
+$filesystem = new Filesystem(new MemoryAdapter());
+
+$filesystem->write('new_file.txt', 'yay a new text file!');
+
+$contents = $filesystem->read('new_file.txt');
 ```
