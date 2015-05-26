@@ -27,4 +27,11 @@ $filesystem = new Filesystem(new MemoryAdapter());
 $filesystem->write('new_file.txt', 'yay a new text file!');
 
 $contents = $filesystem->read('new_file.txt');
+
+// If you have existing test files, you can populate the memory adapter from a
+// filesystem path.
+$adapter = MemoryAdapter::createFromPath('path/to/some/folder');
+
+// Or, you can use an existing filesystem, and convert it.
+$adapter = MemoryAdapter::createFromFilesystem($filesystem);
 ```
