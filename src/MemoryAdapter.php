@@ -337,7 +337,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * Filters the file system returns paths inside the directory.
+     * Filters the file system returning paths inside the directory.
      *
      *  @param string $directory
      *  @param bool   $recursive
@@ -348,28 +348,41 @@ class MemoryAdapter implements AdapterInterface
     {
         $paths = array_keys($this->storage);
 
-        if ($directory === '' && $recursive) {
-            return $paths;
-        }
-
-        if ($directory === '' && !$recursive) {
-            // Find paths that aren't in a directory.
-            return array_filter($paths, function ($path) {
-                return strpos($path, '/') === false;
-            });
-        }
-
-        $directory .= '/';
-
         if ($recursive) {
             return array_filter($paths, function ($path) use ($directory) {
-                return strpos($path, $directory) === 0;
+                return $this->pathIsInDirectory($path, $directory);
             });
         }
 
         return array_filter($paths, function ($path) use ($directory) {
-            return strpos($path, $directory) === 0 && strpos(substr($path, strlen($directory)), '/') === false;
+            return $this->pathIsInDirectory($path, $directory) && $this->noSubdir($path, $directory);
         });
+    }
+
+    /**
+     * Determines if the path is inside the directory.
+     *
+     * @param string $path
+     * @param string $directory
+     *
+     * @return bool
+     */
+    protected function pathIsInDirectory($path, $directory)
+    {
+        return $directory === '' || strpos($path, $directory . '/') === 0;
+    }
+
+    /**
+     * Determines if the path is not inside a sub-directory.
+     *
+     * @param string $path
+     * @param string $directory
+     *
+     * @return bool
+     */
+    protected function noSubdir($path, $directory)
+    {
+        return strpos(substr($path, strlen($directory) + 1), '/') === false;
     }
 
     /**
