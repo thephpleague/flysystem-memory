@@ -1,7 +1,7 @@
 {
     "name": "twistor/flysystem-memory-adapter",
     "type": "library",
-    "description": "An in-memory adapter for Flysystem.",
+    "description": "An in-memory adapter for Flysystem. Useful for tests.",
     "license": "MIT",
     "homepage": "http://github.com/twistor/flysystem-memory-adapter",
     "authors": [
@@ -19,6 +19,11 @@
     "autoload": {
         "psr-4": {
             "Twistor\\Flysystem\\": "src/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
         }
     }
 }
