@@ -92,10 +92,6 @@ class MemoryAdapter implements AdapterInterface
             return false;
         }
 
-        if ($this->hasDirectory($dirname)) {
-            return $this->getMetadata($dirname);
-        }
-
         // Ensure sub-directories.
         if ($dirname !== '' && !$this->createDir(Util::dirname($dirname), $config)) {
             return false;

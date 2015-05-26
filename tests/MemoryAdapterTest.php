@@ -90,20 +90,36 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 
     public function testCreateFromFilesystem()
     {
+        @unlink(__DIR__ . '/tmp/tmpfile.txt');
+        @rmdir(__DIR__ . '/tmp');
         mkdir(__DIR__ . '/tmp');
+        touch(__DIR__ . '/tmp/tmpfile.txt');
 
         $adapter = MemoryAdapter::createFromFilesystem(new Filesystem(new Local(__DIR__)));
         $contents = $adapter->listContents('', true);
-        $this->assertSame(2, count($contents));
-        $this->assertTrue($contents[0]['path'] === 'tmp' || $contents[0]['path'] === 'MemoryAdapterTest.php');
-        $this->assertTrue($contents[1]['path'] === 'tmp' || $contents[1]['path'] === 'MemoryAdapterTest.php');
+
+        usort($contents, function($a, $b) {
+            return strcmp($a['path'], $b['path']);
+        });
+
+        $this->assertSame(3, count($contents));
+        $this->assertSame('MemoryAdapterTest.php', $contents[0]['path']);
+        $this->assertSame('tmp', $contents[1]['path']);
+        $this->assertSame('tmp/tmpfile.txt', $contents[2]['path']);
 
         $adapter = MemoryAdapter::createFromPath(__DIR__);
         $contents = $adapter->listContents('', true);
-        $this->assertSame(2, count($contents));
-        $this->assertTrue($contents[0]['path'] === 'tmp' || $contents[0]['path'] === 'MemoryAdapterTest.php');
-        $this->assertTrue($contents[1]['path'] === 'tmp' || $contents[1]['path'] === 'MemoryAdapterTest.php');
 
+        usort($contents, function($a, $b) {
+            return strcmp($a['path'], $b['path']);
+        });
+
+        $this->assertSame(3, count($contents));
+        $this->assertSame('MemoryAdapterTest.php', $contents[0]['path']);
+        $this->assertSame('tmp', $contents[1]['path']);
+        $this->assertSame('tmp/tmpfile.txt', $contents[2]['path']);
+
+        unlink(__DIR__ . '/tmp/tmpfile.txt');
         rmdir(__DIR__ . '/tmp');
     }
 
@@ -113,5 +129,13 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
     public function testCreateFromFilesystemFail()
     {
         MemoryAdapter::createFromPath('does not exist');
+    }
+
+    /**
+     * @expectedException LogicException
+     */
+    public function testCreateFromFilesystemFail2()
+    {
+        MemoryAdapter::createFromPath(__FILE__);
     }
 }
