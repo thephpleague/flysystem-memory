@@ -316,16 +316,8 @@ class MemoryAdapter implements AdapterInterface
      */
     protected function doListContents($directory, $recursive)
     {
-        $paths = array_keys($this->storage);
-
-        if ($recursive) {
-            return array_filter($paths, function ($path) use ($directory) {
-                return $this->pathIsInDirectory($path, $directory);
-            });
-        }
-
-        return array_filter($paths, function ($path) use ($directory) {
-            return $this->pathIsInDirectory($path, $directory) && $this->noSubdir($path, $directory);
+        return array_filter(array_keys($this->storage), function ($path) use ($directory, $recursive) {
+            return $this->pathIsInDirectory($path, $directory) && ($recursive || $this->noSubdir($path, $directory));
         });
     }
 
