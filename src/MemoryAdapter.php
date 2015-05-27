@@ -304,7 +304,7 @@ class MemoryAdapter implements AdapterInterface
     protected function doListContents($directory, $recursive)
     {
         return array_filter(array_keys($this->storage), function ($path) use ($directory, $recursive) {
-            return $this->pathIsInDirectory($path, $directory) && ($recursive || $this->noSubdir($path, $directory));
+            return Util::dirname($path) === $directory || $recursive && $this->pathIsInDirectory($path, $directory);
         });
     }
 
@@ -391,19 +391,6 @@ class MemoryAdapter implements AdapterInterface
     protected function hasFile($path)
     {
         return $this->has($path) && $this->storage[$path]['type'] === 'file';
-    }
-
-    /**
-     * Determines if the path is not inside a sub-directory.
-     *
-     * @param string $path
-     * @param string $directory
-     *
-     * @return bool
-     */
-    protected function noSubdir($path, $directory)
-    {
-        return strpos(substr($path, strlen($directory) + 1), '/') === false;
     }
 
     /**
