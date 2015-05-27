@@ -210,11 +210,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function rename($path, $newpath)
     {
-        if (!$this->copy($path, $newpath)) {
-            return false;
-        }
-
-        return $this->deletePath($path);
+        return $this->copy($path, $newpath) && $this->deletePath($path);
     }
 
     /**
@@ -265,11 +261,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function write($path, $contents, Config $config)
     {
-        if ($this->has($path)) {
-            return false;
-        }
-
-        if (!$this->createDir(Util::dirname($path), $config)) {
+        if ($this->has($path) || !$this->createDir(Util::dirname($path), $config)) {
             return false;
         }
 
