@@ -95,6 +95,7 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         mkdir(__DIR__ . '/tmp');
         touch(__DIR__ . '/tmp/tmpfile.txt');
 
+        // Test createFromFilesystem().
         $adapter = MemoryAdapter::createFromFilesystem(new Filesystem(new Local(__DIR__)));
         $contents = $adapter->listContents('', true);
 
@@ -103,10 +104,14 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         });
 
         $this->assertSame(3, count($contents));
+
         $this->assertSame('MemoryAdapterTest.php', $contents[0]['path']);
         $this->assertSame('tmp', $contents[1]['path']);
         $this->assertSame('tmp/tmpfile.txt', $contents[2]['path']);
 
+        $this->assertSame(file_get_contents(__FILE__), $adapter->read('MemoryAdapterTest.php')['contents']);
+
+        // Test createFromPath().
         $adapter = MemoryAdapter::createFromPath(__DIR__);
         $contents = $adapter->listContents('', true);
 
@@ -115,9 +120,12 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         });
 
         $this->assertSame(3, count($contents));
+
         $this->assertSame('MemoryAdapterTest.php', $contents[0]['path']);
         $this->assertSame('tmp', $contents[1]['path']);
         $this->assertSame('tmp/tmpfile.txt', $contents[2]['path']);
+
+        $this->assertSame(file_get_contents(__FILE__), $adapter->read('MemoryAdapterTest.php')['contents']);
 
         unlink(__DIR__ . '/tmp/tmpfile.txt');
         rmdir(__DIR__ . '/tmp');

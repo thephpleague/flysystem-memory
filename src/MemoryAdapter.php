@@ -56,10 +56,7 @@ class MemoryAdapter implements AdapterInterface
 
         foreach ($filesystem->listWith(['timestamp', 'visibility'], '', true) as $meta) {
             if ($meta['type'] === 'file') {
-                $content = $filesystem->read($meta['path']);
-                $content = $content === false ? '' : $content;
-
-                $adapter->write($meta['path'], $content, $config);
+                $adapter->write($meta['path'], (string) $filesystem->read($meta['path']), $config);
                 $adapter->setVisibility($meta['path'], $meta['visibility']);
                 $adapter->setTimestamp($meta['path'], $meta['timestamp']);
 
