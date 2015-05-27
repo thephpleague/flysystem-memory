@@ -99,7 +99,7 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $adapter = MemoryAdapter::createFromFilesystem(new Filesystem(new Local(__DIR__)));
         $contents = $adapter->listContents('', true);
 
-        usort($contents, function($a, $b) {
+        usort($contents, function ($a, $b) {
             return strcmp($a['path'], $b['path']);
         });
 
@@ -115,7 +115,7 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $adapter = MemoryAdapter::createFromPath(__DIR__);
         $contents = $adapter->listContents('', true);
 
-        usort($contents, function($a, $b) {
+        usort($contents, function ($a, $b) {
             return strcmp($a['path'], $b['path']);
         });
 

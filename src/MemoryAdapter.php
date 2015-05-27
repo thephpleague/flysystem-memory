@@ -101,7 +101,8 @@ class MemoryAdapter implements AdapterInterface
     /**
      * {@inheritdoc}
      */
-    public function delete($path) {
+    public function delete($path)
+    {
         return $this->hasFile($path) && $this->deletePath($path);
     }
 
@@ -233,7 +234,8 @@ class MemoryAdapter implements AdapterInterface
     /**
      * {@inheritdoc}
      */
-    public function update($path, $contents, Config $config) {
+    public function update($path, $contents, Config $config)
+    {
         if (!$this->hasFile($path)) {
             return false;
         }
@@ -292,7 +294,8 @@ class MemoryAdapter implements AdapterInterface
      *
      * @return true
      */
-    protected function deletePath($path) {
+    protected function deletePath($path)
+    {
         unset($this->storage[$path]);
 
         return true;
