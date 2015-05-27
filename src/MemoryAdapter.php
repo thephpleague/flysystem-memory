@@ -88,12 +88,8 @@ class MemoryAdapter implements AdapterInterface
      */
     public function createDir($dirname, Config $config)
     {
-        if ($this->hasFile($dirname)) {
-            return false;
-        }
-
         // Ensure sub-directories.
-        if ($dirname !== '' && !$this->createDir(Util::dirname($dirname), $config)) {
+        if ($this->hasFile($dirname) || $dirname !== '' && !$this->createDir(Util::dirname($dirname), $config)) {
             return false;
         }
 
@@ -106,13 +102,7 @@ class MemoryAdapter implements AdapterInterface
      * {@inheritdoc}
      */
     public function delete($path) {
-        if (!$this->hasFile($path)) {
-            return false;
-        }
-
-        unset($this->storage[$path]);
-
-        return true;
+        return $this->hasFile($path) && $this->deletePath($path);
     }
 
     /**
@@ -120,17 +110,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function deleteDir($dirname)
     {
-        if (!$this->hasDirectory($dirname)) {
-            return false;
-        }
-
-        // Empty the directory.
-        foreach ($this->doListContents($dirname, true) as $path) {
-            unset($this->storage[$path]);
-        }
-        unset($this->storage[$dirname]);
-
-        return true;
+        return $this->hasDirectory($dirname) && $this->emptyDirectory($dirname) && $this->deletePath($dirname);
     }
 
     /**
@@ -232,9 +212,8 @@ class MemoryAdapter implements AdapterInterface
         if (!$this->copy($path, $newpath)) {
             return false;
         }
-        unset($this->storage[$path]);
 
-        return true;
+        return $this->deletePath($path);
     }
 
     /**
@@ -307,6 +286,19 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
+     * Deletes a path.
+     *
+     * @param string $path
+     *
+     * @return true
+     */
+    protected function deletePath($path) {
+        unset($this->storage[$path]);
+
+        return true;
+    }
+
+    /**
      * Filters the file system returning paths inside the directory.
      *
      *  @param string $directory
@@ -319,6 +311,23 @@ class MemoryAdapter implements AdapterInterface
         return array_filter(array_keys($this->storage), function ($path) use ($directory, $recursive) {
             return $this->pathIsInDirectory($path, $directory) && ($recursive || $this->noSubdir($path, $directory));
         });
+    }
+
+    /**
+     * Empties a directory.
+     *
+     * @param string $directory
+     *
+     * @return true
+     */
+    protected function emptyDirectory($directory)
+    {
+        // Empty the directory.
+        foreach ($this->doListContents($directory, true) as $path) {
+            $this->deletePath($path);
+        }
+
+        return true;
     }
 
     /**
