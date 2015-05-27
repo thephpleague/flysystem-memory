@@ -45,7 +45,7 @@ class MemoryAdapter implements AdapterInterface
      *
      * @param \League\Flysystem\FilesystemInterface $filesystem The Flysystem filesystem.
      *
-     * @return \Twistor\Flysystem\MemoryAdapter A new memory adapter.
+     * @return self A new memory adapter.
      */
     public static function createFromFilesystem(FilesystemInterface $filesystem)
     {
@@ -55,14 +55,14 @@ class MemoryAdapter implements AdapterInterface
         $config = new Config();
 
         foreach ($filesystem->listWith(['timestamp', 'visibility'], '', true) as $meta) {
-            if ($meta['type'] === 'file') {
-                $adapter->write($meta['path'], (string) $filesystem->read($meta['path']), $config);
-                $adapter->setVisibility($meta['path'], $meta['visibility']);
-                $adapter->setTimestamp($meta['path'], $meta['timestamp']);
-
-            } else {
+            if ($meta['type'] === 'dir') {
                 $adapter->createDir($meta['path'], $config);
+                continue;
             }
+
+            $adapter->write($meta['path'], (string) $filesystem->read($meta['path']), $config);
+            $adapter->setVisibility($meta['path'], $meta['visibility']);
+            $adapter->setTimestamp($meta['path'], $meta['timestamp']);
         }
 
         return $adapter;
