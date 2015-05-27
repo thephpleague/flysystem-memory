@@ -138,13 +138,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMetadata($path)
     {
-        if (!$this->has($path)) {
-            return false;
-        }
-
-        // Return the minimum amout of metadata so that users don't depend on it
-        // being present.
-        return ['type' => $this->storage[$path]['type'], 'path' => $path];
+        return $this->getKeys($path, ['type', 'path']);
     }
 
     /**
@@ -152,11 +146,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMimetype($path)
     {
-        if (!$this->hasFile($path)) {
-            return false;
-        }
-
-        return ['mimetype' => Util::guessMimeType($path, $this->storage[$path]['contents'])];
+        return $this->getFileKeys($path, ['mimetype']);
     }
 
     /**
@@ -164,11 +154,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getSize($path)
     {
-        if (!$this->hasFile($path)) {
-            return false;
-        }
-
-        return ['size' => strlen($this->storage[$path]['contents'])];
+        return $this->getFileKeys($path, ['size']);
     }
 
     /**
@@ -176,11 +162,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getTimestamp($path)
     {
-        if (!$this->hasFile($path)) {
-            return false;
-        }
-
-        return ['timestamp' => $this->storage[$path]['timestamp']];
+        return $this->getFileKeys($path, ['timestamp']);
     }
 
     /**
@@ -188,11 +170,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getVisibility($path)
     {
-        if (!$this->hasFile($path)) {
-            return false;
-        }
-
-        return ['visibility' => $this->storage[$path]['visibility']];
+        return $this->getFileKeys($path, ['visibility']);
     }
 
     /**
@@ -214,6 +192,7 @@ class MemoryAdapter implements AdapterInterface
             if ($path === '') {
                 continue;
             }
+
             $return[] = $this->getMetadata($path);
         }
 
@@ -225,14 +204,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function read($path)
     {
-        if (!$this->hasFile($path)) {
-            return false;
-        }
-
-        return [
-            'path' => $path,
-            'contents' => $this->storage[$path]['contents'],
-        ];
+        return $this->getFileKeys($path, ['path', 'contents']);
     }
 
     /**
@@ -289,6 +261,8 @@ class MemoryAdapter implements AdapterInterface
 
         $this->storage[$path]['contents'] = $contents;
         $this->storage[$path]['timestamp'] = time();
+        $this->storage[$path]['size'] = strlen($contents);
+        $this->storage[$path]['mimetype'] = Util::guessMimeType($path, $this->storage[$path]['contents']);
 
         if ($visibility = $config->get('visibility')) {
             $this->setVisibility($path, $visibility);
@@ -356,29 +330,47 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * Determines if the path is inside the directory.
+     * Returns the keys for a file.
      *
      * @param string $path
-     * @param string $directory
+     * @param array  $keys
      *
-     * @return bool
+     * @return array|false
      */
-    protected function pathIsInDirectory($path, $directory)
+    protected function getFileKeys($path, array $keys)
     {
-        return $directory === '' || strpos($path, $directory . '/') === 0;
+        if (!$this->hasFile($path)) {
+            return false;
+        }
+
+        return $this->getKeys($path, $keys);
     }
 
     /**
-     * Determines if the path is not inside a sub-directory.
+     * Returns the keys for a path.
      *
      * @param string $path
-     * @param string $directory
+     * @param array  $keys
      *
-     * @return bool
+     * @return array|false
      */
-    protected function noSubdir($path, $directory)
+    protected function getKeys($path, array $keys)
     {
-        return strpos(substr($path, strlen($directory) + 1), '/') === false;
+        if (!$this->has($path)) {
+            return false;
+        }
+
+        $return = [];
+        foreach ($keys as $key) {
+            if ($key === 'path') {
+                $return[$key] = $path;
+                continue;
+            }
+
+            $return[$key] = $this->storage[$path][$key];
+        }
+
+        return $return;
     }
 
     /**
@@ -403,6 +395,32 @@ class MemoryAdapter implements AdapterInterface
     protected function hasFile($path)
     {
         return $this->has($path) && $this->storage[$path]['type'] === 'file';
+    }
+
+    /**
+     * Determines if the path is not inside a sub-directory.
+     *
+     * @param string $path
+     * @param string $directory
+     *
+     * @return bool
+     */
+    protected function noSubdir($path, $directory)
+    {
+        return strpos(substr($path, strlen($directory) + 1), '/') === false;
+    }
+
+    /**
+     * Determines if the path is inside the directory.
+     *
+     * @param string $path
+     * @param string $directory
+     *
+     * @return bool
+     */
+    protected function pathIsInDirectory($path, $directory)
+    {
+        return $directory === '' || strpos($path, $directory . '/') === 0;
     }
 
     /**
