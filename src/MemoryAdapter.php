@@ -2,9 +2,9 @@
 
 namespace Twistor\Flysystem;
 
-use League\Flysystem\AdapterInterface;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Adapter\Polyfill\StreamedWritingTrait;
+use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemInterface;
@@ -32,7 +32,7 @@ class MemoryAdapter implements AdapterInterface
      *
      * @param string $path The path to the folder.
      *
-     * @return \Twistor\Flysystem\MemoryAdapter A new memory adapter.
+     * @return MemoryAdapter A new memory adapter.
      */
     public static function createFromPath($path)
     {
@@ -46,7 +46,7 @@ class MemoryAdapter implements AdapterInterface
     /**
      * Creates a Memory adapter from a Flysystem filesystem.
      *
-     * @param \League\Flysystem\FilesystemInterface $filesystem The Flysystem filesystem.
+     * @param FilesystemInterface $filesystem The Flysystem filesystem.
      *
      * @return self A new memory adapter.
      */
