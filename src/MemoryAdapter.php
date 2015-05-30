@@ -4,6 +4,7 @@ namespace Twistor\Flysystem;
 
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Adapter\Local;
+use League\Flysystem\Adapter\Polyfill\StreamedWritingTrait;
 use League\Flysystem\Config;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemInterface;
@@ -15,6 +16,8 @@ use League\Flysystem\Util;
  */
 class MemoryAdapter implements AdapterInterface
 {
+    use StreamedWritingTrait;
+
     /**
      * The emulated filesystem.
      *
@@ -74,7 +77,7 @@ class MemoryAdapter implements AdapterInterface
     public function copy($path, $newpath)
     {
         // Make sure all the destination sub-directories exist.
-        if (!$this->createDir(Util::dirname($newpath), new Config())) {
+        if (!$this->ensureSubDirs($newpath)) {
             return false;
         }
 
@@ -89,7 +92,7 @@ class MemoryAdapter implements AdapterInterface
     public function createDir($dirname, Config $config)
     {
         // Ensure sub-directories.
-        if ($this->hasFile($dirname) || $dirname !== '' && !$this->createDir(Util::dirname($dirname), $config)) {
+        if ($this->hasFile($dirname) || $dirname !== '' && !$this->ensureSubDirs($dirname, $config)) {
             return false;
         }
 
@@ -111,7 +114,13 @@ class MemoryAdapter implements AdapterInterface
      */
     public function deleteDir($dirname)
     {
-        return $this->hasDirectory($dirname) && $this->emptyDirectory($dirname) && $this->deletePath($dirname);
+        if (!$this->hasDirectory($dirname)) {
+            return false;
+        }
+
+        $this->emptyDirectory($dirname);
+
+        return $this->deletePath($dirname);
     }
 
     /**
@@ -167,17 +176,15 @@ class MemoryAdapter implements AdapterInterface
      */
     public function listContents($directory = '', $recursive = false)
     {
-        $return = [];
-        foreach ($this->doListContents($directory, $recursive) as $path) {
-            // Filter out root.
-            if ($path === '') {
-                continue;
-            }
+        $contents = $this->doListContents($directory, $recursive);
 
-            $return[] = $this->getMetadata($path);
-        }
+        $contents = array_values(array_filter($contents, function ($path) {
+            return $path !== '';
+        }));
 
-        return $return;
+        return array_map(function ($path) {
+            return $this->getMetadata($path);
+        }, $contents);
     }
 
     /**
@@ -238,8 +245,8 @@ class MemoryAdapter implements AdapterInterface
 
         $this->storage[$path]['contents'] = $contents;
         $this->storage[$path]['timestamp'] = time();
-        $this->storage[$path]['size'] = strlen($contents);
-        $this->storage[$path]['mimetype'] = Util::guessMimeType($path, $this->storage[$path]['contents']);
+        $this->storage[$path]['size'] = Util::contentSize($contents);
+        $this->storage[$path]['mimetype'] = Util::guessMimeType($path, $contents);
 
         if ($visibility = $config->get('visibility')) {
             $this->setVisibility($path, $visibility);
@@ -251,17 +258,9 @@ class MemoryAdapter implements AdapterInterface
     /**
      * {@inheritdoc}
      */
-    public function updateStream($path, $resource, Config $config)
-    {
-        return $this->update($path, stream_get_contents($resource), $config);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function write($path, $contents, Config $config)
     {
-        if ($this->has($path) || !$this->createDir(Util::dirname($path), $config)) {
+        if ($this->has($path) || !$this->ensureSubDirs($path, $config)) {
             return false;
         }
 
@@ -269,14 +268,6 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['visibility'] = AdapterInterface::VISIBILITY_PUBLIC;
 
         return $this->update($path, $contents, $config);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function writeStream($path, $resource, Config $config)
-    {
-        return $this->write($path, stream_get_contents($resource), $config);
     }
 
     /**
@@ -303,26 +294,42 @@ class MemoryAdapter implements AdapterInterface
      */
     protected function doListContents($directory, $recursive)
     {
-        return array_filter(array_keys($this->storage), function ($path) use ($directory, $recursive) {
-            return Util::dirname($path) === $directory || $recursive && $this->pathIsInDirectory($path, $directory);
-        });
+        $filter = function ($path) use ($directory, $recursive) {
+            if (Util::dirname($path) === $directory) {
+                return true;
+            }
+
+            return $recursive && $this->pathIsInDirectory($path, $directory);
+        };
+
+        return array_filter(array_keys($this->storage), $filter);
     }
 
     /**
      * Empties a directory.
      *
      * @param string $directory
-     *
-     * @return true
      */
     protected function emptyDirectory($directory)
     {
-        // Empty the directory.
         foreach ($this->doListContents($directory, true) as $path) {
             $this->deletePath($path);
         }
+    }
 
-        return true;
+    /**
+     * Ensures that the sub-directories of a directory exist.
+     *
+     * @param string      $directory The directory.
+     * @param Config|null $config    Optionl configuration.
+     *
+     * @return bool True on success, false on failure.
+     */
+    protected function ensureSubDirs($directory, Config $config = null)
+    {
+        $config = $config ?: new Config();
+
+        return $this->createDir(Util::dirname($directory), $config);
     }
 
     /**
