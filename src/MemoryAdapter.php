@@ -36,7 +36,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public static function createFromPath($path)
     {
-        if (!is_dir($path) || !is_readable($path)) {
+        if (! is_dir($path) || ! is_readable($path)) {
             throw new \LogicException(sprintf('%s does not exist or is not readable.', $path));
         }
 
@@ -77,7 +77,7 @@ class MemoryAdapter implements AdapterInterface
     public function copy($path, $newpath)
     {
         // Make sure all the destination sub-directories exist.
-        if (!$this->ensureSubDirs($newpath)) {
+        if (! $this->ensureSubDirs($newpath)) {
             return false;
         }
 
@@ -92,7 +92,7 @@ class MemoryAdapter implements AdapterInterface
     public function createDir($dirname, Config $config)
     {
         // Ensure sub-directories.
-        if ($this->hasFile($dirname) || $dirname !== '' && !$this->ensureSubDirs($dirname, $config)) {
+        if ($this->hasFile($dirname) || $dirname !== '' && ! $this->ensureSubDirs($dirname, $config)) {
             return false;
         }
 
@@ -114,7 +114,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function deleteDir($dirname)
     {
-        if (!$this->hasDirectory($dirname)) {
+        if (! $this->hasDirectory($dirname)) {
             return false;
         }
 
@@ -200,7 +200,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function readStream($path)
     {
-        if (!$result = $this->read($path)) {
+        if (! $result = $this->read($path)) {
             return false;
         }
 
@@ -225,7 +225,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function setVisibility($path, $visibility)
     {
-        if (!$this->hasFile($path)) {
+        if (! $this->hasFile($path)) {
             return false;
         }
 
@@ -239,7 +239,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function update($path, $contents, Config $config)
     {
-        if (!$this->hasFile($path)) {
+        if (! $this->hasFile($path)) {
             return false;
         }
 
@@ -260,7 +260,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function write($path, $contents, Config $config)
     {
-        if ($this->has($path) || !$this->ensureSubDirs($path, $config)) {
+        if ($this->has($path) || ! $this->ensureSubDirs($path, $config)) {
             return false;
         }
 
@@ -342,7 +342,7 @@ class MemoryAdapter implements AdapterInterface
      */
     protected function getFileKeys($path, array $keys)
     {
-        if (!$this->hasFile($path)) {
+        if (! $this->hasFile($path)) {
             return false;
         }
 
@@ -359,7 +359,7 @@ class MemoryAdapter implements AdapterInterface
      */
     protected function getKeys($path, array $keys)
     {
-        if (!$this->has($path)) {
+        if (! $this->has($path)) {
             return false;
         }
 
