@@ -37,12 +37,16 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
     public function testCreateDir()
     {
         $result = $this->adapter->createDir('dir/subdir', new Config());
-
         $this->assertSame(2, count($result));
         $this->assertSame('dir/subdir', $result['path']);
         $this->assertSame('dir', $result['type']);
         $this->assertTrue($this->adapter->has('dir'));
         $this->assertTrue($this->adapter->has('dir/subdir'));
+
+        $result = $this->adapter->createDir('dir', new Config());
+        $this->assertSame(2, count($result));
+        $this->assertSame('dir', $result['path']);
+        $this->assertSame('dir', $result['type']);
 
         $this->assertFalse($this->adapter->createDir('file.txt', new Config()));
         $this->assertFalse($this->adapter->createDir('file.txt/dir', new Config()));
@@ -50,6 +54,7 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers ::delete
+     * @covers ::hasFile
      */
     public function testDelete()
     {
@@ -60,6 +65,7 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers ::deleteDir
+     * @covers ::hasDirectory
      */
     public function testDeleteDir()
     {
@@ -115,6 +121,14 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @covers ::getVisibility
+     */
+    public function testGetVisibility()
+    {
+        $this->assertSame('public', $this->adapter->getVisibility('file.txt')['visibility']);
+    }
+
+    /**
      * @covers ::has
      */
     public function testHas()
@@ -125,6 +139,8 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers ::listContents
+     * @covers ::doListContents
+     * @covers ::pathIsInDirectory
      */
     public function testListContents()
     {
@@ -158,6 +174,8 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertSame(2, count($result));
         $this->assertSame('dir/file.txt', $result[0]['path']);
         $this->assertSame('dir/subdir', $result[1]['path']);
+
+        $this->assertSame([], $this->adapter->listContents('no_dir'));
     }
 
     /**
@@ -226,64 +244,5 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $result = $this->adapter->write('new_file.txt', 'new contents', new Config());
         $this->assertSame('new contents', $result['contents']);
         $this->assertFalse($this->adapter->write('file.txt/new_file.txt', 'contents', new Config()));
-    }
-
-    public function testCreateFromFilesystem()
-    {
-        @unlink(__DIR__ . '/tmp/tmpfile.txt');
-        @rmdir(__DIR__ . '/tmp');
-        mkdir(__DIR__ . '/tmp');
-        touch(__DIR__ . '/tmp/tmpfile.txt');
-
-        // Test createFromFilesystem().
-        $adapter = MemoryAdapter::createFromFilesystem(new Filesystem(new Local(__DIR__)));
-        $contents = $adapter->listContents('', true);
-
-        usort($contents, function ($a, $b) {
-            return strcmp($a['path'], $b['path']);
-        });
-
-        $this->assertSame(3, count($contents));
-
-        $this->assertSame('MemoryAdapterTest.php', $contents[0]['path']);
-        $this->assertSame('tmp', $contents[1]['path']);
-        $this->assertSame('tmp/tmpfile.txt', $contents[2]['path']);
-
-        $this->assertSame(file_get_contents(__FILE__), $adapter->read('MemoryAdapterTest.php')['contents']);
-
-        // Test createFromPath().
-        $adapter = MemoryAdapter::createFromPath(__DIR__);
-        $contents = $adapter->listContents('', true);
-
-        usort($contents, function ($a, $b) {
-            return strcmp($a['path'], $b['path']);
-        });
-
-        $this->assertSame(3, count($contents));
-
-        $this->assertSame('MemoryAdapterTest.php', $contents[0]['path']);
-        $this->assertSame('tmp', $contents[1]['path']);
-        $this->assertSame('tmp/tmpfile.txt', $contents[2]['path']);
-
-        $this->assertSame(file_get_contents(__FILE__), $adapter->read('MemoryAdapterTest.php')['contents']);
-
-        unlink(__DIR__ . '/tmp/tmpfile.txt');
-        rmdir(__DIR__ . '/tmp');
-    }
-
-    /**
-     * @expectedException LogicException
-     */
-    public function testCreateFromFilesystemFail()
-    {
-        MemoryAdapter::createFromPath('does not exist');
-    }
-
-    /**
-     * @expectedException LogicException
-     */
-    public function testCreateFromFilesystemFail2()
-    {
-        MemoryAdapter::createFromPath(__FILE__);
     }
 }

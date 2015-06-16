@@ -2,13 +2,9 @@
 
 namespace Twistor\Flysystem;
 
-use League\Flysystem\Adapter\Local;
 use League\Flysystem\Adapter\Polyfill\StreamedWritingTrait;
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
-use League\Flysystem\Filesystem;
-use League\Flysystem\FilesystemInterface;
-use League\Flysystem\Plugin\ListWith;
 use League\Flysystem\Util;
 
 /**
@@ -28,56 +24,12 @@ class MemoryAdapter implements AdapterInterface
     protected $storage = ['' => ['type' => 'dir']];
 
     /**
-     * Creates a Memory adapter from a filesystem folder.
-     *
-     * @param string $path The path to the folder.
-     *
-     * @return MemoryAdapter A new memory adapter.
-     */
-    public static function createFromPath($path)
-    {
-        if (! is_dir($path) || ! is_readable($path)) {
-            throw new \LogicException(sprintf('%s does not exist or is not readable.', $path));
-        }
-
-        return static::createFromFilesystem(new Filesystem(new Local($path)));
-    }
-
-    /**
-     * Creates a Memory adapter from a Flysystem filesystem.
-     *
-     * @param FilesystemInterface $filesystem The Flysystem filesystem.
-     *
-     * @return self A new memory adapter.
-     */
-    public static function createFromFilesystem(FilesystemInterface $filesystem)
-    {
-        $filesystem->addPlugin(new ListWith());
-
-        $adapter = new static();
-        $config = new Config();
-
-        foreach ($filesystem->listWith(['timestamp', 'visibility'], '', true) as $meta) {
-            if ($meta['type'] === 'dir') {
-                $adapter->createDir($meta['path'], $config);
-                continue;
-            }
-
-            $adapter->write($meta['path'], (string) $filesystem->read($meta['path']), $config);
-            $adapter->setVisibility($meta['path'], $meta['visibility']);
-            $adapter->setTimestamp($meta['path'], $meta['timestamp']);
-        }
-
-        return $adapter;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function copy($path, $newpath)
     {
         // Make sure all the destination sub-directories exist.
-        if (! $this->ensureSubDirs($newpath)) {
+        if (! $this->createDir(Util::dirname($newpath), new Config())) {
             return false;
         }
 
@@ -92,11 +44,15 @@ class MemoryAdapter implements AdapterInterface
     public function createDir($dirname, Config $config)
     {
         if ($this->hasDirectory($dirname)) {
-            return true;
+            return $this->getMetadata($dirname);
         }
 
-        // Ensure sub-directories.
-        if ($this->hasFile($dirname) || ! $this->ensureSubDirs($dirname, $config)) {
+        if ($this->hasFile($dirname)) {
+            return false;
+        }
+
+        // Make sure all the sub-directories exist.
+        if (! $this->createDir(Util::dirname($dirname), $config)) {
             return false;
         }
 
@@ -200,9 +156,7 @@ class MemoryAdapter implements AdapterInterface
             unset($contents[$has_root]);
         }
 
-        return array_map(function ($path) {
-            return $this->getMetadata($path);
-        }, array_values($contents));
+        return array_map([$this, 'getMetadata'], array_values($contents));
     }
 
     /**
@@ -284,7 +238,8 @@ class MemoryAdapter implements AdapterInterface
      */
     public function write($path, $contents, Config $config)
     {
-        if (! $this->ensureSubDirs($path, $config)) {
+        // Make sure all the destination sub-directories exist.
+        if (! $this->createDir(Util::dirname($path), $config)) {
             return false;
         }
 
@@ -313,21 +268,6 @@ class MemoryAdapter implements AdapterInterface
         };
 
         return array_filter(array_keys($this->storage), $filter);
-    }
-
-    /**
-     * Ensures that the sub-directories of a directory exist.
-     *
-     * @param string      $directory The directory.
-     * @param Config|null $config    Optionl configuration.
-     *
-     * @return bool True on success, false on failure.
-     */
-    protected function ensureSubDirs($directory, Config $config = null)
-    {
-        $config = $config ?: new Config();
-
-        return $this->createDir(Util::dirname($directory), $config);
     }
 
     /**
@@ -365,16 +305,5 @@ class MemoryAdapter implements AdapterInterface
     protected function pathIsInDirectory($path, $directory)
     {
         return $directory === '' || strpos($path, $directory . '/') === 0;
-    }
-
-    /**
-     * Sets the timestamp of a file.
-     *
-     * @param string $path
-     * @param int    $timestamp
-     */
-    protected function setTimestamp($path, $timestamp)
-    {
-        $this->storage[$path]['timestamp'] = (int) $timestamp;
     }
 }
