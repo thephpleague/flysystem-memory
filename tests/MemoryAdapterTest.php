@@ -7,85 +7,225 @@ use League\Flysystem\Config;
 use League\Flysystem\Filesystem;
 use Twistor\Flysystem\MemoryAdapter;
 
+/**
+ * @coversDefaultClass \Twistor\Flysystem\MemoryAdapter
+ */
 class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 {
-    public function test()
+    protected $adapter;
+
+    public function setUp()
     {
-        $adapter = new MemoryAdapter();
-        $config = new Config(['visibility' => 'private']);
+        $this->adapter = new MemoryAdapter();
+        $this->adapter->write('file.txt', 'contents', new Config());
+    }
 
-        $this->assertSame('dir', $adapter->getMetadata('')['type']);
-        $this->assertSame('', $adapter->getMetadata('')['path']);
+    /**
+     * @covers ::copy
+     */
+    public function testCopy()
+    {
+        $this->assertTrue($this->adapter->copy('file.txt', 'dir/new_file.txt'));
+        $this->assertSame('contents', $this->adapter->read('dir/new_file.txt', new Config())['contents']);
 
-        $this->assertFalse($adapter->has('pics'));
-        $this->assertFalse($adapter->read('pics/test.jpg'));
-        $this->assertFalse($adapter->delete('pics/test.jpg'));
-        $this->assertFalse($adapter->deleteDir('pics'));
-        $this->assertFalse($adapter->readStream('pics/test.jpg'));
-        $this->assertFalse($adapter->getMetadata('pics/test.jpg'));
-        $this->assertFalse($adapter->getSize('pics/test.jpg'));
-        $this->assertFalse($adapter->getTimestamp('pics/test.jpg'));
-        $this->assertFalse($adapter->getMimetype('pics/test.jpg'));
-        $this->assertFalse($adapter->getVisibility('pics/test.jpg'));
-        $this->assertFalse($adapter->setVisibility('pics/test.jpg', 'asdfasf'));
-        $this->assertFalse($adapter->update('pics/test.jpg', 'image content', $config));
+        $this->assertFalse($this->adapter->copy('file.txt', 'dir/new_file.txt/other.txt'));
+    }
 
-        $this->assertSame('pics/test.jpg', $adapter->write('pics/test.jpg', 'image content', $config)['path']);
-        $this->assertFalse($adapter->write('pics/test.jpg/new.jpg', 'image content', $config));
-        $this->assertSame('image content', $adapter->read('pics/test.jpg')['contents']);
-        $this->assertTrue($adapter->has('pics'));
+    /**
+     * @covers ::createDir
+     */
+    public function testCreateDir()
+    {
+        $result = $this->adapter->createDir('dir/subdir', new Config());
 
-        $this->assertSame('pics/test.jpg', $adapter->getMetadata('pics/test.jpg')['path']);
-        $this->assertSame('file', $adapter->getMetadata('pics/test.jpg')['type']);
-        $this->assertSame(strlen('image content'), $adapter->getSize('pics/test.jpg')['size']);
-        $this->assertTrue(is_int($adapter->getTimestamp('pics/test.jpg')['timestamp']));
-        $this->assertSame('image/jpeg', $adapter->getMimetype('pics/test.jpg')['mimetype']);
+        $this->assertSame(2, count($result));
+        $this->assertSame('dir/subdir', $result['path']);
+        $this->assertSame('dir', $result['type']);
+        $this->assertTrue($this->adapter->has('dir'));
+        $this->assertTrue($this->adapter->has('dir/subdir'));
 
-        $this->assertSame('private', $adapter->getVisibility('pics/test.jpg')['visibility']);
-        $this->assertSame('public', $adapter->setVisibility('pics/test.jpg', 'public')['visibility']);
-        $this->assertSame('public', $adapter->getVisibility('pics/test.jpg')['visibility']);
+        $this->assertFalse($this->adapter->createDir('file.txt', new Config()));
+        $this->assertFalse($this->adapter->createDir('file.txt/dir', new Config()));
+    }
 
-        $this->assertInternalType('array', $adapter->update('pics/test.jpg', 'updated image content', $config));
-        $this->assertSame('updated image content', $adapter->read('pics/test.jpg')['contents']);
+    /**
+     * @covers ::delete
+     */
+    public function testDelete()
+    {
+        $this->assertTrue($this->adapter->delete('file.txt'));
+        $this->assertFalse($this->adapter->has('file.txt'));
+        $this->assertFalse($this->adapter->delete('file.txt'));
+    }
 
-        $stream = fopen('php://temp', 'w+b');
-        fwrite($stream, 'new image content');
-        rewind($stream);
-        $this->assertFalse($adapter->writeStream('pics/test.jpg', $stream, $config));
-        rewind($stream);
-        $this->assertSame('file', $adapter->updateStream('pics/test.jpg', $stream, $config)['type']);
-        fclose($stream);
+    /**
+     * @covers ::deleteDir
+     */
+    public function testDeleteDir()
+    {
+        $this->adapter->createDir('dir/subdir', new Config());
+        $this->assertTrue($this->adapter->deleteDir('dir'));
+        $this->assertFalse($this->adapter->has('dir/subdir'));
+        $this->assertFalse($this->adapter->has('dir'));
 
-        $this->assertSame('new image content', stream_get_contents($adapter->readStream('pics/test.jpg')['stream']));
-        $this->assertTrue($adapter->rename('pics/test.jpg', 'photos/test.jpg'));
-        $this->assertFalse($adapter->rename('photos/test.jpg', 'photos/test.jpg/new.jpg'));
-        $this->assertTrue($adapter->has('photos/test.jpg'));
-        $this->assertTrue($adapter->has('photos'));
-        $this->assertFalse($adapter->has('pics/test.jpg'));
+        $this->assertFalse($this->adapter->deleteDir('dir'));
+    }
 
-        // Test invalid copy.
-        $this->assertFalse($adapter->copy('photos/test.jpg', 'photos/test.jpg/subfolder/new.jpg'));
+    /**
+     * @covers ::getMetaData
+     */
+    public function testGetMetadata()
+    {
+        $meta = $this->adapter->getMetadata('file.txt');
 
-        $listing = [['type' => 'dir', 'path' => 'pics'], ['type' => 'dir', 'path' => 'photos']];
-        $this->assertSame($listing, $adapter->listContents());
-        $listing[] = ['type' => 'file', 'path' => 'photos/test.jpg'];
-        $this->assertSame($listing, $adapter->listContents('', true));
-        $this->assertSame([['type' => 'file', 'path' => 'photos/test.jpg']], $adapter->listContents('photos'));
+        $this->assertSame(6, count($meta));
+        $this->assertSame('file.txt', $meta['path']);
+        $this->assertSame('file', $meta['type']);
+        $this->assertSame(8, $meta['size']);
+        $this->assertSame('public', $meta['visibility']);
+        $this->assertSame('text/plain', $meta['mimetype']);
+        $this->assertTrue(is_int($meta['timestamp']));
+    }
 
-        $adapter->write('photos/vacation/fun.jpg', 'fun', $config);
-        $listing = [
-            ['type' => 'file', 'path' => 'photos/test.jpg'],
-            ['type' => 'dir', 'path' => 'photos/vacation'],
-            ['type' => 'file', 'path' => 'photos/vacation/fun.jpg'],
-        ];
+    /**
+     * @covers ::getMimetype
+     */
+    public function testGetMimetype()
+    {
+        $meta = $this->adapter->getMimetype('file.txt');
+        $this->assertSame('text/plain', $meta['mimetype']);
+    }
 
-        $this->assertSame($listing, $adapter->listContents('photos', true));
-        $this->assertTrue($adapter->delete('photos/test.jpg'));
-        $this->assertTrue($adapter->deleteDir('photos'));
-        $this->assertSame([], $adapter->listContents('photos'));
-        $this->assertSame([['type' => 'dir', 'path' => 'pics']], $adapter->listContents('', true));
+    /**
+     * @covers ::getSize
+     */
+    public function testGetSize()
+    {
+        $meta = $this->adapter->getSize('file.txt');
+        $this->assertSame(8, $meta['size']);
+    }
 
-        $this->assertTrue($adapter->deleteDir(''));
+    /**
+     * @covers ::getTimestamp
+     */
+    public function testGetTimestamp()
+    {
+        $meta = $this->adapter->getTimestamp('file.txt');
+        $this->assertTrue(is_int($meta['timestamp']));
+    }
+
+    /**
+     * @covers ::has
+     */
+    public function testHas()
+    {
+        $this->assertTrue($this->adapter->has('file.txt'));
+        $this->assertFalse($this->adapter->has('no_file.txt'));
+    }
+
+    /**
+     * @covers ::listContents
+     */
+    public function testListContents()
+    {
+        $result = $this->adapter->listContents('');
+        $this->assertSame(1, count($result));
+        $this->assertSame('file.txt', $result[0]['path']);
+
+        $this->adapter->write('dir/file.txt', 'contents', new Config());
+        $this->adapter->write('dir/subdir/file.txt', 'contents', new Config());
+
+        $result = $this->adapter->listContents('', true);
+        $this->assertSame(5, count($result));
+        $this->assertSame('file.txt', $result[0]['path']);
+        $this->assertSame('dir', $result[1]['path']);
+        $this->assertSame('dir/file.txt', $result[2]['path']);
+        $this->assertSame('dir/subdir', $result[3]['path']);
+        $this->assertSame('dir/subdir/file.txt', $result[4]['path']);
+
+        $result = $this->adapter->listContents('');
+        $this->assertSame(2, count($result));
+        $this->assertSame('file.txt', $result[0]['path']);
+        $this->assertSame('dir', $result[1]['path']);
+
+        $result = $this->adapter->listContents('dir', true);
+        $this->assertSame(3, count($result));
+        $this->assertSame('dir/file.txt', $result[0]['path']);
+        $this->assertSame('dir/subdir', $result[1]['path']);
+        $this->assertSame('dir/subdir/file.txt', $result[2]['path']);
+
+        $result = $this->adapter->listContents('dir');
+        $this->assertSame(2, count($result));
+        $this->assertSame('dir/file.txt', $result[0]['path']);
+        $this->assertSame('dir/subdir', $result[1]['path']);
+    }
+
+    /**
+     * @covers ::read
+     */
+    public function testRead()
+    {
+        $this->assertSame('contents', $this->adapter->read('file.txt')['contents']);
+        $this->assertSame('file.txt', $this->adapter->read('file.txt')['path']);
+    }
+
+    /**
+     * @covers ::readStream
+     */
+    public function testReadStream()
+    {
+        $result = $this->adapter->readStream('file.txt');
+
+        $this->assertSame('contents', stream_get_contents($result['stream']));
+        $this->assertSame('file.txt', $result['path']);
+    }
+
+    /**
+     * @covers ::rename
+     */
+    public function testRename()
+    {
+        $this->assertTrue($this->adapter->rename('file.txt', 'dir/subdir/file.txt'));
+        $this->assertTrue($this->adapter->has('dir'));
+        $this->assertTrue($this->adapter->has('dir/subdir'));
+
+        $this->assertFalse($this->adapter->rename('dir/subdir/file.txt', 'dir/subdir/file.txt/new_file.txt'));
+    }
+
+    /**
+     * @covers ::setVisibility
+     */
+    public function testSetVisibility()
+    {
+        $result = $this->adapter->setVisibility('file.txt', 'private');
+        $this->assertSame('private', $result['visibility']);
+        $this->assertSame('private', $this->adapter->getVisibility('file.txt')['visibility']);
+
+        $this->assertFalse($this->adapter->setVisibility('no_file.txt', 'public'));
+    }
+
+    /**
+     * @covers ::update
+     */
+    public function testUpdate()
+    {
+        $result = $this->adapter->update('file.txt', 'new contents', new Config(['visibility' => 'private']));
+        $this->assertSame('new contents', $result['contents']);
+        $this->assertSame('file.txt', $result['path']);
+        $this->assertSame('private', $result['visibility']);
+        $this->assertSame('new contents', $this->adapter->read('file.txt', new Config())['contents']);
+
+        $this->assertFalse($this->adapter->update('new_file.txt', 'contents', new Config()));
+    }
+
+    /**
+     * @covers ::write
+     */
+    public function testWrite()
+    {
+        $result = $this->adapter->write('new_file.txt', 'new contents', new Config());
+        $this->assertSame('new contents', $result['contents']);
+        $this->assertFalse($this->adapter->write('file.txt/new_file.txt', 'contents', new Config()));
     }
 
     public function testCreateFromFilesystem()

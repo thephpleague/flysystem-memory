@@ -91,8 +91,12 @@ class MemoryAdapter implements AdapterInterface
      */
     public function createDir($dirname, Config $config)
     {
+        if ($this->hasDirectory($dirname)) {
+            return true;
+        }
+
         // Ensure sub-directories.
-        if ($this->hasFile($dirname) || $dirname !== '' && ! $this->ensureSubDirs($dirname, $config)) {
+        if ($this->hasFile($dirname) || ! $this->ensureSubDirs($dirname, $config)) {
             return false;
         }
 
@@ -106,7 +110,13 @@ class MemoryAdapter implements AdapterInterface
      */
     public function delete($path)
     {
-        return $this->hasFile($path) && $this->deletePath($path);
+        if (! $this->hasFile($path)) {
+            return false;
+        }
+
+        unset($this->storage[$path]);
+
+        return true;
     }
 
     /**
@@ -118,9 +128,13 @@ class MemoryAdapter implements AdapterInterface
             return false;
         }
 
-        $this->emptyDirectory($dirname);
+        foreach ($this->doListContents($dirname, true) as $path) {
+            unset($this->storage[$path]);
+        }
 
-        return $this->deletePath($dirname);
+        unset($this->storage[$dirname]);
+
+        return true;
     }
 
     /**
@@ -128,7 +142,10 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMetadata($path)
     {
-        return $this->getKeys($path, ['type', 'path']);
+        $metadata = $this->storage[$path] + ['path' => $path];
+        unset($metadata['contents']);
+
+        return $metadata;
     }
 
     /**
@@ -136,7 +153,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMimetype($path)
     {
-        return $this->getFileKeys($path, ['mimetype']);
+        return $this->getMetadata($path);
     }
 
     /**
@@ -144,7 +161,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getSize($path)
     {
-        return $this->getFileKeys($path, ['size']);
+        return $this->getMetadata($path);
     }
 
     /**
@@ -152,7 +169,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getTimestamp($path)
     {
-        return $this->getFileKeys($path, ['timestamp']);
+        return $this->getMetadata($path);
     }
 
     /**
@@ -160,7 +177,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getVisibility($path)
     {
-        return $this->getFileKeys($path, ['visibility']);
+        return $this->getMetadata($path);
     }
 
     /**
@@ -178,13 +195,14 @@ class MemoryAdapter implements AdapterInterface
     {
         $contents = $this->doListContents($directory, $recursive);
 
-        $contents = array_values(array_filter($contents, function ($path) {
-            return $path !== '';
-        }));
+        // Remove the root directory from any listing.
+        if (false !== $has_root = array_search('', $contents, true)) {
+            unset($contents[$has_root]);
+        }
 
         return array_map(function ($path) {
             return $this->getMetadata($path);
-        }, $contents);
+        }, array_values($contents));
     }
 
     /**
@@ -192,7 +210,10 @@ class MemoryAdapter implements AdapterInterface
      */
     public function read($path)
     {
-        return $this->getFileKeys($path, ['path', 'contents']);
+        return [
+            'path' => $path,
+            'contents' => $this->storage[$path]['contents'],
+        ];
     }
 
     /**
@@ -200,9 +221,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function readStream($path)
     {
-        if (! $result = $this->read($path)) {
-            return false;
-        }
+        $result = $this->read($path);
 
         $result['stream'] = fopen('php://temp', 'w+b');
         fwrite($result['stream'], $result['contents']);
@@ -217,7 +236,12 @@ class MemoryAdapter implements AdapterInterface
      */
     public function rename($path, $newpath)
     {
-        return $this->copy($path, $newpath) && $this->deletePath($path);
+        if (! $this->copy($path, $newpath)) {
+            return false;
+        }
+        unset($this->storage[$path]);
+
+        return true;
     }
 
     /**
@@ -249,10 +273,10 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['mimetype'] = Util::guessMimeType($path, $contents);
 
         if ($visibility = $config->get('visibility')) {
-            $this->setVisibility($path, $visibility);
+            $this->storage[$path]['visibility'] = $visibility;
         }
 
-        return $this->getMetadata($path);
+        return $this->storage[$path] + compact('path');
     }
 
     /**
@@ -260,7 +284,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function write($path, $contents, Config $config)
     {
-        if ($this->has($path) || ! $this->ensureSubDirs($path, $config)) {
+        if (! $this->ensureSubDirs($path, $config)) {
             return false;
         }
 
@@ -268,20 +292,6 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['visibility'] = AdapterInterface::VISIBILITY_PUBLIC;
 
         return $this->update($path, $contents, $config);
-    }
-
-    /**
-     * Deletes a path.
-     *
-     * @param string $path
-     *
-     * @return true
-     */
-    protected function deletePath($path)
-    {
-        unset($this->storage[$path]);
-
-        return true;
     }
 
     /**
@@ -306,18 +316,6 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * Empties a directory.
-     *
-     * @param string $directory
-     */
-    protected function emptyDirectory($directory)
-    {
-        foreach ($this->doListContents($directory, true) as $path) {
-            $this->deletePath($path);
-        }
-    }
-
-    /**
      * Ensures that the sub-directories of a directory exist.
      *
      * @param string      $directory The directory.
@@ -330,50 +328,6 @@ class MemoryAdapter implements AdapterInterface
         $config = $config ?: new Config();
 
         return $this->createDir(Util::dirname($directory), $config);
-    }
-
-    /**
-     * Returns the keys for a file.
-     *
-     * @param string $path
-     * @param array  $keys
-     *
-     * @return array|false
-     */
-    protected function getFileKeys($path, array $keys)
-    {
-        if (! $this->hasFile($path)) {
-            return false;
-        }
-
-        return $this->getKeys($path, $keys);
-    }
-
-    /**
-     * Returns the keys for a path.
-     *
-     * @param string $path
-     * @param array  $keys
-     *
-     * @return array|false
-     */
-    protected function getKeys($path, array $keys)
-    {
-        if (! $this->has($path)) {
-            return false;
-        }
-
-        $return = [];
-        foreach ($keys as $key) {
-            if ($key === 'path') {
-                $return[$key] = $path;
-                continue;
-            }
-
-            $return[$key] = $this->storage[$path][$key];
-        }
-
-        return $return;
     }
 
     /**
