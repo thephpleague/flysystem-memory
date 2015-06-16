@@ -84,12 +84,11 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
     {
         $meta = $this->adapter->getMetadata('file.txt');
 
-        $this->assertSame(6, count($meta));
+        $this->assertSame(5, count($meta));
         $this->assertSame('file.txt', $meta['path']);
         $this->assertSame('file', $meta['type']);
         $this->assertSame(8, $meta['size']);
         $this->assertSame('public', $meta['visibility']);
-        $this->assertSame('text/plain', $meta['mimetype']);
         $this->assertTrue(is_int($meta['timestamp']));
     }
 

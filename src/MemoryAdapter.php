@@ -109,7 +109,12 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMimetype($path)
     {
-        return $this->getMetadata($path);
+        $mimetype = Util::guessMimeType($path, $this->read($path)['contents']);
+
+        return [
+            'mimetype' => $mimetype,
+            'path' => $path,
+        ];
     }
 
     /**
@@ -224,7 +229,6 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['contents'] = $contents;
         $this->storage[$path]['timestamp'] = time();
         $this->storage[$path]['size'] = Util::contentSize($contents);
-        $this->storage[$path]['mimetype'] = Util::guessMimeType($path, $contents);
 
         if ($visibility = $config->get('visibility')) {
             $this->storage[$path]['visibility'] = $visibility;
