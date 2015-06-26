@@ -13,14 +13,12 @@ env:
   - COMPOSER_OPTS=""
   - COMPOSER_OPTS="--prefer-lowest"
 
-matrix:
-  fast_finish: true
-
-install:
-  - travis_retry composer install --no-interaction --prefer-source $COMPOSER_OPTS
+before_script:
+  - travis_retry composer self-update
+  - travis_retry composer update $COMPOSER_OPTS
 
 script:
-  - bin/phpunit --coverage-text --coverage-clover coverage.xml
+  - php vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover
 
 after_script:
   - wget https://scrutinizer-ci.com/ocular.phar
