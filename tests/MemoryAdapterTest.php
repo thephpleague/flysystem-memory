@@ -1,17 +1,18 @@
 <?php
 
-namespace Twistor\Tests;
-
-use League\Flysystem\Adapter\Local;
 use League\Flysystem\Config;
-use League\Flysystem\Filesystem;
-use Twistor\Flysystem\MemoryAdapter;
+use League\Flysystem\Memory\MemoryAdapter;
 
 /**
- * @coversDefaultClass \Twistor\Flysystem\MemoryAdapter
+ * @coversDefaultClass \League\Flysystem\Memory\MemoryAdapter
  */
 class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * The memory adapter.
+     *
+     * @var \League\Flysystem\Memory\MemoryAdapter
+     */
     protected $adapter;
 
     public function setUp()

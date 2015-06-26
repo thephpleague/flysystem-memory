@@ -1,6 +1,6 @@
 <?php
 
-namespace Twistor\Flysystem;
+namespace League\Flysystem\Memory;
 
 use League\Flysystem\Adapter\Polyfill\StreamedWritingTrait;
 use League\Flysystem\AdapterInterface;
@@ -8,7 +8,7 @@ use League\Flysystem\Config;
 use League\Flysystem\Util;
 
 /**
- * An adapter that keeps the filesystem in memory. Useful for tests.
+ * An adapter that keeps the filesystem in memory.
  */
 class MemoryAdapter implements AdapterInterface
 {
