@@ -1,13 +1,18 @@
 {
     "name": "league/flysystem-memory",
     "description": "An in-memory adapter for Flysystem.",
+    "keywords": [
+        "league",
+        "league/flysystem-memory"
+    ],
     "type": "library",
     "license": "MIT",
     "homepage": "http://github.com/twistor/flysystem-memory-adapter",
     "authors": [
         {
             "name": "Chris Leppanen",
-            "email": "chris.leppanen@gmail.com"
+            "email": "chris.leppanen@gmail.com",
+            "role": "Developer"
         }
     ],
     "require": {

@@ -1,5 +1,5 @@
 vendor
+bin
 coverage
 coverage.xml
 composer.lock
-humbuglog.txt
