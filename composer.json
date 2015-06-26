@@ -7,7 +7,7 @@
     ],
     "type": "library",
     "license": "MIT",
-    "homepage": "http://github.com/twistor/flysystem-memory-adapter",
+    "homepage": "https://github.com/thephpleague/flysystem-memory",
     "authors": [
         {
             "name": "Chris Leppanen",
