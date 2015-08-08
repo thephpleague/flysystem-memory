@@ -2,8 +2,9 @@
     "name": "league/flysystem-memory",
     "description": "An in-memory adapter for Flysystem.",
     "keywords": [
-        "league",
-        "league/flysystem-memory"
+        "flysystem",
+        "memory",
+        "adapter"
     ],
     "type": "library",
     "license": "MIT",
