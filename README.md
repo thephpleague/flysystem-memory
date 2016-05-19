@@ -27,4 +27,7 @@ $filesystem = new Filesystem(new MemoryAdapter());
 $filesystem->write('new_file.txt', 'yay a new text file!');
 
 $contents = $filesystem->read('new_file.txt');
+
+// Explicitly set timestamp (e.g. for testing)
+$filesystem->write('old_file.txt', 'very old content', ['timestamp' => 13377331]);
 ```

@@ -227,7 +227,7 @@ class MemoryAdapter implements AdapterInterface
         }
 
         $this->storage[$path]['contents'] = $contents;
-        $this->storage[$path]['timestamp'] = time();
+        $this->storage[$path]['timestamp'] = $config->get('timestamp', time());
         $this->storage[$path]['size'] = Util::contentSize($contents);
 
         if ($visibility = $config->get('visibility')) {
