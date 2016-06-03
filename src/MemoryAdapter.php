@@ -109,7 +109,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMimetype($path)
     {
-        $mimetype = Util::guessMimeType($path, $this->read($path)['contents']);
+        $mimetype = Util::guessMimeType($path, $this->storage[$path]['contents']);
 
         return [
             'mimetype' => $mimetype,
@@ -156,11 +156,6 @@ class MemoryAdapter implements AdapterInterface
     {
         $contents = $this->doListContents($directory, $recursive);
 
-        // Remove the root directory from any listing.
-        if (false !== $has_root = array_search('', $contents, true)) {
-            unset($contents[$has_root]);
-        }
-
         return array_map([$this, 'getMetadata'], array_values($contents));
     }
 
@@ -180,14 +175,12 @@ class MemoryAdapter implements AdapterInterface
      */
     public function readStream($path)
     {
-        $result = $this->read($path);
+        $stream = fopen('php://memory', 'w+b');
 
-        $result['stream'] = fopen('php://memory', 'w+b');
-        fwrite($result['stream'], $result['contents']);
-        rewind($result['stream']);
-        unset($result['contents']);
+        fwrite($stream, $this->storage[$path]['contents']);
+        rewind($stream);
 
-        return $result;
+        return compact('path', 'stream');
     }
 
     /**
@@ -229,10 +222,7 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['contents'] = $contents;
         $this->storage[$path]['timestamp'] = $config->get('timestamp', time());
         $this->storage[$path]['size'] = Util::contentSize($contents);
-
-        if ($visibility = $config->get('visibility')) {
-            $this->storage[$path]['visibility'] = $visibility;
-        }
+        $this->storage[$path]['visibility'] = $config->get('visibility', $this->storage[$path]['visibility']);
 
         return $this->getMetadata($path);
     }
@@ -264,6 +254,11 @@ class MemoryAdapter implements AdapterInterface
     protected function doListContents($directory, $recursive)
     {
         $filter = function ($path) use ($directory, $recursive) {
+            // Remove the root directory from any listing.
+            if ($path === '') {
+                return false;
+            }
+
             if (Util::dirname($path) === $directory) {
                 return true;
             }
