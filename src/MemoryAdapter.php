@@ -182,7 +182,7 @@ class MemoryAdapter implements AdapterInterface
     {
         $result = $this->read($path);
 
-        $result['stream'] = fopen('php://temp', 'w+b');
+        $result['stream'] = fopen('php://memory', 'w+b');
         fwrite($result['stream'], $result['contents']);
         rewind($result['stream']);
         unset($result['contents']);
