@@ -228,7 +228,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
     public function testUpdate()
     {
         $result = $this->adapter->update('file.txt', 'new contents', new Config(['visibility' => 'private']));
-        $this->assertSame('new contents', $result['contents']);
         $this->assertSame('file.txt', $result['path']);
         $this->assertSame('private', $result['visibility']);
         $this->assertSame('new contents', $this->adapter->read('file.txt', new Config())['contents']);
@@ -242,7 +241,8 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
     public function testWrite()
     {
         $result = $this->adapter->write('new_file.txt', 'new contents', new Config());
-        $this->assertSame('new contents', $result['contents']);
+        $this->assertSame('new_file.txt', $result['path']);
+        $this->assertSame('file', $result['type']);
         $this->assertFalse($this->adapter->write('file.txt/new_file.txt', 'contents', new Config()));
     }
 

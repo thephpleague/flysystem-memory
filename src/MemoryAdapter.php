@@ -234,7 +234,7 @@ class MemoryAdapter implements AdapterInterface
             $this->storage[$path]['visibility'] = $visibility;
         }
 
-        return $this->storage[$path] + compact('path');
+        return $this->getMetadata($path);
     }
 
     /**
