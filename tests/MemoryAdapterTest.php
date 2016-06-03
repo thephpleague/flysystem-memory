@@ -246,7 +246,8 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->write('file.txt/new_file.txt', 'contents', new Config()));
     }
 
-    public function testTimestampCanBeConfigured() {
+    public function testTimestampCanBeConfigured()
+    {
         $now = 1460000000;
         $this->adapter->write('file.txt', 'content', new Config(['timestamp' => $now]));
         $this->assertEquals($now, $this->adapter->getTimestamp('file.txt')['timestamp']);

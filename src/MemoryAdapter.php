@@ -24,12 +24,12 @@ class MemoryAdapter implements AdapterInterface
     protected $storage = ['' => ['type' => 'dir']];
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function copy($path, $newpath)
     {
         // Make sure all the destination sub-directories exist.
-        if (! $this->createDir(Util::dirname($newpath), new Config())) {
+        if ( ! $this->createDir(Util::dirname($newpath), new Config())) {
             return false;
         }
 
@@ -39,7 +39,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function createDir($dirname, Config $config)
     {
@@ -52,7 +52,7 @@ class MemoryAdapter implements AdapterInterface
         }
 
         // Make sure all the sub-directories exist.
-        if (! $this->createDir(Util::dirname($dirname), $config)) {
+        if ( ! $this->createDir(Util::dirname($dirname), $config)) {
             return false;
         }
 
@@ -62,11 +62,11 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function delete($path)
     {
-        if (! $this->hasFile($path)) {
+        if ( ! $this->hasFile($path)) {
             return false;
         }
 
@@ -76,11 +76,11 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function deleteDir($dirname)
     {
-        if (! $this->hasDirectory($dirname)) {
+        if ( ! $this->hasDirectory($dirname)) {
             return false;
         }
 
@@ -94,7 +94,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getMetadata($path)
     {
@@ -105,7 +105,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getMimetype($path)
     {
@@ -118,7 +118,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getSize($path)
     {
@@ -126,7 +126,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getTimestamp($path)
     {
@@ -134,7 +134,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getVisibility($path)
     {
@@ -142,7 +142,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function has($path)
     {
@@ -150,7 +150,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function listContents($directory = '', $recursive = false)
     {
@@ -165,7 +165,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function read($path)
     {
@@ -176,7 +176,7 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function readStream($path)
     {
@@ -191,11 +191,11 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function rename($path, $newpath)
     {
-        if (! $this->copy($path, $newpath)) {
+        if ( ! $this->copy($path, $newpath)) {
             return false;
         }
         unset($this->storage[$path]);
@@ -204,11 +204,11 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function setVisibility($path, $visibility)
     {
-        if (! $this->hasFile($path)) {
+        if ( ! $this->hasFile($path)) {
             return false;
         }
 
@@ -218,11 +218,11 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function update($path, $contents, Config $config)
     {
-        if (! $this->hasFile($path)) {
+        if ( ! $this->hasFile($path)) {
             return false;
         }
 
@@ -238,12 +238,12 @@ class MemoryAdapter implements AdapterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function write($path, $contents, Config $config)
     {
         // Make sure all the destination sub-directories exist.
-        if (! $this->createDir(Util::dirname($path), $config)) {
+        if ( ! $this->createDir(Util::dirname($path), $config)) {
             return false;
         }
 
