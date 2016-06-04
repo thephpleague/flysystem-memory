@@ -29,7 +29,7 @@ class MemoryAdapter implements AdapterInterface
     public function copy($path, $newpath)
     {
         // Make sure all the destination sub-directories exist.
-        if ( ! $this->createDir(Util::dirname($newpath), new Config())) {
+        if ( ! $this->doCreateDir(Util::dirname($newpath))) {
             return false;
         }
 
@@ -43,20 +43,9 @@ class MemoryAdapter implements AdapterInterface
      */
     public function createDir($dirname, Config $config)
     {
-        if ($this->hasDirectory($dirname)) {
-            return $this->getMetadata($dirname);
-        }
-
-        if ($this->hasFile($dirname)) {
+        if ( ! $this->doCreateDir($dirname)) {
             return false;
         }
-
-        // Make sure all the sub-directories exist.
-        if ( ! $this->createDir(Util::dirname($dirname), $config)) {
-            return false;
-        }
-
-        $this->storage[$dirname]['type'] = 'dir';
 
         return $this->getMetadata($dirname);
     }
@@ -233,7 +222,7 @@ class MemoryAdapter implements AdapterInterface
     public function write($path, $contents, Config $config)
     {
         // Make sure all the destination sub-directories exist.
-        if ( ! $this->createDir(Util::dirname($path), $config)) {
+        if ( ! $this->doCreateDir(Util::dirname($path))) {
             return false;
         }
 
@@ -241,6 +230,33 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['visibility'] = AdapterInterface::VISIBILITY_PUBLIC;
 
         return $this->update($path, $contents, $config);
+    }
+
+    /**
+     * Creates a directory.
+     *
+     * @param string $dirname
+     *
+     * @return bool
+     */
+    protected function doCreateDir($dirname)
+    {
+        if ($this->hasDirectory($dirname)) {
+            return true;
+        }
+
+        if ($this->hasFile($dirname)) {
+            return false;
+        }
+
+        // Make sure all the sub-directories exist.
+        if ( ! $this->doCreateDir(Util::dirname($dirname))) {
+            return false;
+        }
+
+        $this->storage[$dirname]['type'] = 'dir';
+
+        return true;
     }
 
     /**
