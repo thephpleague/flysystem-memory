@@ -4,7 +4,7 @@ use League\Flysystem\Config;
 use League\Flysystem\Memory\MemoryAdapter;
 
 /**
- * @coversDefaultClass \League\Flysystem\Memory\MemoryAdapter
+ * @covers \League\Flysystem\Memory\MemoryAdapter
  */
 class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
 {
@@ -21,9 +21,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->adapter->write('file.txt', 'contents', new Config());
     }
 
-    /**
-     * @covers ::copy
-     */
     public function testCopy()
     {
         $this->assertTrue($this->adapter->copy('file.txt', 'dir/new_file.txt'));
@@ -32,9 +29,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->copy('file.txt', 'dir/new_file.txt/other.txt'));
     }
 
-    /**
-     * @covers ::createDir
-     */
     public function testCreateDir()
     {
         $result = $this->adapter->createDir('dir/subdir', new Config());
@@ -53,10 +47,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->createDir('file.txt/dir', new Config()));
     }
 
-    /**
-     * @covers ::delete
-     * @covers ::hasFile
-     */
     public function testDelete()
     {
         $this->assertTrue($this->adapter->delete('file.txt'));
@@ -64,10 +54,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->delete('file.txt'));
     }
 
-    /**
-     * @covers ::deleteDir
-     * @covers ::hasDirectory
-     */
     public function testDeleteDir()
     {
         $this->adapter->createDir('dir/subdir', new Config());
@@ -78,9 +64,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->deleteDir('dir'));
     }
 
-    /**
-     * @covers ::getMetaData
-     */
     public function testGetMetadata()
     {
         $meta = $this->adapter->getMetadata('file.txt');
@@ -93,55 +76,35 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertTrue(is_int($meta['timestamp']));
     }
 
-    /**
-     * @covers ::getMimetype
-     */
     public function testGetMimetype()
     {
         $meta = $this->adapter->getMimetype('file.txt');
         $this->assertSame('text/plain', $meta['mimetype']);
     }
 
-    /**
-     * @covers ::getSize
-     */
     public function testGetSize()
     {
         $meta = $this->adapter->getSize('file.txt');
         $this->assertSame(8, $meta['size']);
     }
 
-    /**
-     * @covers ::getTimestamp
-     */
     public function testGetTimestamp()
     {
         $meta = $this->adapter->getTimestamp('file.txt');
         $this->assertTrue(is_int($meta['timestamp']));
     }
 
-    /**
-     * @covers ::getVisibility
-     */
     public function testGetVisibility()
     {
         $this->assertSame('public', $this->adapter->getVisibility('file.txt')['visibility']);
     }
 
-    /**
-     * @covers ::has
-     */
     public function testHas()
     {
         $this->assertTrue($this->adapter->has('file.txt'));
         $this->assertFalse($this->adapter->has('no_file.txt'));
     }
 
-    /**
-     * @covers ::listContents
-     * @covers ::doListContents
-     * @covers ::pathIsInDirectory
-     */
     public function testListContents()
     {
         $result = $this->adapter->listContents('');
@@ -178,18 +141,12 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertSame([], $this->adapter->listContents('no_dir'));
     }
 
-    /**
-     * @covers ::read
-     */
     public function testRead()
     {
         $this->assertSame('contents', $this->adapter->read('file.txt')['contents']);
         $this->assertSame('file.txt', $this->adapter->read('file.txt')['path']);
     }
 
-    /**
-     * @covers ::readStream
-     */
     public function testReadStream()
     {
         $result = $this->adapter->readStream('file.txt');
@@ -198,9 +155,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertSame('file.txt', $result['path']);
     }
 
-    /**
-     * @covers ::rename
-     */
     public function testRename()
     {
         $this->assertTrue($this->adapter->rename('file.txt', 'dir/subdir/file.txt'));
@@ -210,9 +164,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->rename('dir/subdir/file.txt', 'dir/subdir/file.txt/new_file.txt'));
     }
 
-    /**
-     * @covers ::setVisibility
-     */
     public function testSetVisibility()
     {
         $result = $this->adapter->setVisibility('file.txt', 'private');
@@ -222,9 +173,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->setVisibility('no_file.txt', 'public'));
     }
 
-    /**
-     * @covers ::update
-     */
     public function testUpdate()
     {
         $result = $this->adapter->update('file.txt', 'new contents', new Config(['visibility' => 'private']));
@@ -235,9 +183,6 @@ class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
         $this->assertFalse($this->adapter->update('new_file.txt', 'contents', new Config()));
     }
 
-    /**
-     * @covers ::write
-     */
     public function testWrite()
     {
         $result = $this->adapter->write('new_file.txt', 'new contents', new Config());
