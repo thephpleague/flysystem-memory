@@ -21,16 +21,13 @@ class MemoryAdapter implements AdapterInterface
      *
      * @var array
      */
-    protected $storage;
+    protected $storage = ['' => ['type' => 'dir']];
 
     public function __construct(Config $config = null)
     {
-        $this->storage = [
-            '' => [
-                'type' => 'dir',
-                'timestamp' => $config ? $config->get('timestamp', time()) : time(),
-            ],
-        ];
+        $config = $config ?: new Config();
+
+        $this->storage['']['timestamp'] = $config->get('timestamp', time());
     }
 
     /**
