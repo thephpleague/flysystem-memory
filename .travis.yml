@@ -5,20 +5,27 @@ php:
   - 5.6
   - 7.0
   - 7.1
+  - 7.2
+  - 7.3
 
 sudo: false
+
+matrix:
+  allow_failures:
+  - php: 5.5
 
 env:
   - COMPOSER_OPTS=""
   - COMPOSER_OPTS="--prefer-lowest"
 
-before_script:
-  - travis_retry composer self-update
-  - travis_retry composer update $COMPOSER_OPTS
+install:
+  - if [[ "${TRAVIS_PHP_VERSION}" == "5.5" ]]; then composer require phpunit/phpunit:^4.8.36 --prefer-dist --update-with-dependencies; fi
+  - travis_retry composer update --prefer-dist $COMPOSER_OPTS
 
 script:
   - bin/phpunit
+  - if [[ "${TRAVIS_PHP_VERSION}" == "7.2" ]]; then bin/phpstan analyse -l 7 src; fi
 
 after_script:
   - wget https://scrutinizer-ci.com/ocular.phar
-  - if [ "$TRAVIS_PHP_VERSION" != "hhvm" ] && [ "$TRAVIS_PHP_VERSION" != "7.0" ]; then php ocular.phar code-coverage:upload --format=php-clover coverage.xml; fi
+  - php ocular.phar code-coverage:upload --format=php-clover coverage.xml

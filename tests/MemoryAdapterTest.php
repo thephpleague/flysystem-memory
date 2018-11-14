@@ -2,11 +2,12 @@
 
 use League\Flysystem\Config;
 use League\Flysystem\Memory\MemoryAdapter;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \League\Flysystem\Memory\MemoryAdapter
  */
-class MemoryAdapterTest  extends \PHPUnit_Framework_TestCase
+class MemoryAdapterTest  extends TestCase
 {
     /**
      * The memory adapter.
