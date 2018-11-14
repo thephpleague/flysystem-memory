@@ -166,6 +166,10 @@ class MemoryAdapter implements AdapterInterface
     {
         $stream = fopen('php://memory', 'w+b');
 
+        if ( ! is_resource($stream)) {
+            throw new \RuntimeException('Unable to create memory stream.'); // @codeCoverageIgnore
+        }
+
         fwrite($stream, $this->storage[$path]['contents']);
         rewind($stream);
 
