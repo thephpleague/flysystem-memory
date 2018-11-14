@@ -22,6 +22,11 @@ class MemoryAdapterTest  extends TestCase
         $this->adapter->write('file.txt', 'contents', new Config());
     }
 
+    public function testRootHasTimestamp()
+    {
+        $this->arrayHasKey($this->adapter->getTimestamp(''), 'timestamp');
+    }
+
     public function testCopy()
     {
         $this->assertTrue($this->adapter->copy('file.txt', 'dir/new_file.txt'));
@@ -33,16 +38,18 @@ class MemoryAdapterTest  extends TestCase
     public function testCreateDir()
     {
         $result = $this->adapter->createDir('dir/subdir', new Config());
-        $this->assertSame(2, count($result));
+        $this->assertSame(3, count($result));
         $this->assertSame('dir/subdir', $result['path']);
         $this->assertSame('dir', $result['type']);
+        $this->arrayHasKey($result, 'timestamp');
         $this->assertTrue($this->adapter->has('dir'));
         $this->assertTrue($this->adapter->has('dir/subdir'));
 
         $result = $this->adapter->createDir('dir', new Config());
-        $this->assertSame(2, count($result));
+        $this->assertSame(3, count($result));
         $this->assertSame('dir', $result['path']);
         $this->assertSame('dir', $result['type']);
+        $this->arrayHasKey($result, 'timestamp');
 
         $this->assertFalse($this->adapter->createDir('file.txt', new Config()));
         $this->assertFalse($this->adapter->createDir('file.txt/dir', new Config()));
@@ -195,10 +202,23 @@ class MemoryAdapterTest  extends TestCase
     public function testTimestampCanBeConfigured()
     {
         $now = 1460000000;
-        $this->adapter->write('file.txt', 'content', new Config(['timestamp' => $now]));
-        $this->assertEquals($now, $this->adapter->getTimestamp('file.txt')['timestamp']);
+
+        $adapter = new MemoryAdapter(new Config(['timestamp' => $now]));
+
+        $this->assertEquals($now, $adapter->getTimestamp('')['timestamp']);
+
+        $adapter->createDir('foo/bar', new Config(['timestamp' => $now]));
+        $this->assertEquals($now, $adapter->getTimestamp('foo')['timestamp']);
+        $this->assertEquals($now, $adapter->getTimestamp('foo/bar')['timestamp']);
+
+        $adapter->write('baz/file.txt', 'content', new Config(['timestamp' => $now]));
+        $this->assertEquals($now, $adapter->getTimestamp('baz')['timestamp']);
+        $this->assertEquals($now, $adapter->getTimestamp('baz/file.txt')['timestamp']);
+
         $earlier = 1300000000;
-        $this->adapter->update('file.txt', 'new contents', new Config(['timestamp' => $earlier]));
-        $this->assertEquals($earlier, $this->adapter->getTimestamp('file.txt')['timestamp']);
+
+        $adapter->update('baz/file.txt', 'new contents', new Config(['timestamp' => $earlier]));
+        $this->assertEquals($now, $adapter->getTimestamp('baz')['timestamp']);
+        $this->assertEquals($earlier, $adapter->getTimestamp('baz/file.txt')['timestamp']);
     }
 }

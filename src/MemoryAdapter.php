@@ -21,7 +21,17 @@ class MemoryAdapter implements AdapterInterface
      *
      * @var array
      */
-    protected $storage = ['' => ['type' => 'dir']];
+    protected $storage;
+
+    public function __construct(Config $config = null)
+    {
+        $this->storage = [
+            '' => [
+                'type' => 'dir',
+                'timestamp' => $config ? $config->get('timestamp', time()) : time(),
+            ],
+        ];
+    }
 
     /**
      * @inheritdoc
@@ -29,7 +39,7 @@ class MemoryAdapter implements AdapterInterface
     public function copy($path, $newpath)
     {
         // Make sure all the destination sub-directories exist.
-        if ( ! $this->doCreateDir(Util::dirname($newpath))) {
+        if ( ! $this->doCreateDir(Util::dirname($newpath), new Config())) {
             return false;
         }
 
@@ -43,7 +53,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function createDir($dirname, Config $config)
     {
-        if ( ! $this->doCreateDir($dirname)) {
+        if ( ! $this->doCreateDir($dirname, $config)) {
             return false;
         }
 
@@ -226,7 +236,7 @@ class MemoryAdapter implements AdapterInterface
     public function write($path, $contents, Config $config)
     {
         // Make sure all the destination sub-directories exist.
-        if ( ! $this->doCreateDir(Util::dirname($path))) {
+        if ( ! $this->doCreateDir(Util::dirname($path), $config)) {
             return false;
         }
 
@@ -240,10 +250,11 @@ class MemoryAdapter implements AdapterInterface
      * Creates a directory.
      *
      * @param string $dirname
+     * @param Config $config
      *
      * @return bool
      */
-    protected function doCreateDir($dirname)
+    protected function doCreateDir($dirname, Config $config)
     {
         if ($this->hasDirectory($dirname)) {
             return true;
@@ -254,11 +265,12 @@ class MemoryAdapter implements AdapterInterface
         }
 
         // Make sure all the sub-directories exist.
-        if ( ! $this->doCreateDir(Util::dirname($dirname))) {
+        if ( ! $this->doCreateDir(Util::dirname($dirname), $config)) {
             return false;
         }
 
         $this->storage[$dirname]['type'] = 'dir';
+        $this->storage[$dirname]['timestamp'] = $config->get('timestamp', time());
 
         return true;
     }
