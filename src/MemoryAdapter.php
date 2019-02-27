@@ -28,6 +28,7 @@ class MemoryAdapter implements AdapterInterface
         $config = $config ?: new Config();
 
         $this->storage['']['timestamp'] = $config->get('timestamp', time());
+        $this->storage['']['visibility'] = $config->get('visibility', AdapterInterface::VISIBILITY_PUBLIC);
     }
 
     /**
@@ -268,6 +269,7 @@ class MemoryAdapter implements AdapterInterface
 
         $this->storage[$dirname]['type'] = 'dir';
         $this->storage[$dirname]['timestamp'] = $config->get('timestamp', time());
+	    $this->storage[$dirname]['visibility'] = $config->get('visibility', AdapterInterface::VISIBILITY_PUBLIC);
 
         return true;
     }

@@ -27,6 +27,11 @@
             "League\\Flysystem\\Memory\\": "src/"
         }
     },
+    "autoload-dev":  {
+        "psr-4": {
+            "League\\Flysystem\\Memory\\Tests\\": "tests/"
+        }
+    },
     "config": {
         "bin-dir": "bin"
     },

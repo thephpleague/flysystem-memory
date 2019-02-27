@@ -1,5 +1,8 @@
 <?php
 
+namespace League\Flysystem\Memory\Tests;
+
+use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
 use League\Flysystem\Memory\MemoryAdapter;
 use PHPUnit\Framework\TestCase;
@@ -38,21 +41,30 @@ class MemoryAdapterTest  extends TestCase
     public function testCreateDir()
     {
         $result = $this->adapter->createDir('dir/subdir', new Config());
-        $this->assertSame(3, count($result));
+        $this->assertSame(4, count($result));
         $this->assertSame('dir/subdir', $result['path']);
         $this->assertSame('dir', $result['type']);
         $this->arrayHasKey($result, 'timestamp');
+        $this->arrayHasKey($result, 'visibility');
+
         $this->assertTrue($this->adapter->has('dir'));
         $this->assertTrue($this->adapter->has('dir/subdir'));
 
         $result = $this->adapter->createDir('dir', new Config());
-        $this->assertSame(3, count($result));
+        $this->assertSame(4, count($result));
         $this->assertSame('dir', $result['path']);
         $this->assertSame('dir', $result['type']);
         $this->arrayHasKey($result, 'timestamp');
+        $this->arrayHasKey($result, 'visibility');
 
         $this->assertFalse($this->adapter->createDir('file.txt', new Config()));
         $this->assertFalse($this->adapter->createDir('file.txt/dir', new Config()));
+
+        $this->adapter->createDir('public', new Config());
+        $this->assertEquals(AdapterInterface::VISIBILITY_PUBLIC, $this->adapter->getVisibility('public')['visibility']);
+
+        $this->adapter->createDir('private', new Config(['visibility' => AdapterInterface::VISIBILITY_PRIVATE]));
+        $this->assertEquals(AdapterInterface::VISIBILITY_PRIVATE, $this->adapter->getVisibility('private')['visibility']);
     }
 
     public function testDelete()
