@@ -83,7 +83,7 @@ class MemoryAdapterTest  extends TestCase
         $this->assertSame('public', $meta['visibility']);
         $this->assertTrue(is_int($meta['timestamp']));
 
-        $this->adapter->write('dir/file.txt', 'contents', new Config(['mimetype' => 'mime/type']));
+        $this->adapter->write('dir/file.txt', '', new Config(['mimetype' => 'mime/type']));
 
         $meta = $this->adapter->getMetadata('dir/file.txt');
 

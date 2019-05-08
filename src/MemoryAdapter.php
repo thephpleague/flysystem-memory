@@ -94,7 +94,7 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMetadata($path)
     {
-        $metadata = array_filter($this->storage[$path]) + ['path' => $path];
+        $metadata = $this->storage[$path] + ['path' => $path];
         unset($metadata['contents']);
 
         return $metadata;
@@ -105,7 +105,8 @@ class MemoryAdapter implements AdapterInterface
      */
     public function getMimetype($path)
     {
-        $mimetype = $this->storage[$path]['mimetype'] ?: Util::guessMimeType($path, $this->storage[$path]['contents']);
+        $mimetype = isset($this->storage[$path]['mimetype']) ? $this->storage[$path]['mimetype'] :
+            Util::guessMimeType($path, $this->storage[$path]['contents']);
 
         return [
             'mimetype' => $mimetype,
@@ -223,7 +224,9 @@ class MemoryAdapter implements AdapterInterface
         $this->storage[$path]['timestamp'] = $config->get('timestamp', time());
         $this->storage[$path]['size'] = Util::contentSize($contents);
         $this->storage[$path]['visibility'] = $config->get('visibility', $this->storage[$path]['visibility']);
-        $this->storage[$path]['mimetype'] = $config->get('mimetype');
+        if ($config->has('mimetype')) {
+            $this->storage[$path]['mimetype'] = $config->get('mimetype');
+        }
 
         return $this->getMetadata($path);
     }
