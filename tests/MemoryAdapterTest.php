@@ -82,12 +82,24 @@ class MemoryAdapterTest  extends TestCase
         $this->assertSame(8, $meta['size']);
         $this->assertSame('public', $meta['visibility']);
         $this->assertTrue(is_int($meta['timestamp']));
+
+        $this->adapter->write('dir/file.txt', '', new Config(['mimetype' => 'mime/type']));
+
+        $meta = $this->adapter->getMetadata('dir/file.txt');
+
+        $this->assertCount(6, $meta);
+        $this->assertSame('mime/type', $meta['mimetype']);
     }
 
     public function testGetMimetype()
     {
+        $this->adapter->write('dir/file.txt', 'contents', new Config(['mimetype' => 'mime/type']));
+
         $meta = $this->adapter->getMimetype('file.txt');
         $this->assertSame('text/plain', $meta['mimetype']);
+
+        $meta = $this->adapter->getMimetype('dir/file.txt');
+        $this->assertSame('mime/type', $meta['mimetype']);
     }
 
     public function testGetSize()
