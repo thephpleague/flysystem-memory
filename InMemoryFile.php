@@ -27,10 +27,10 @@ class InMemoryFile
      */
     private $visibility;
 
-    public function updateContents(string $contents): void
+    public function updateContents(string $contents, ?int $timestamp): void
     {
         $this->contents = $contents;
-        $this->lastModified = time();
+        $this->lastModified = $timestamp ?: time();
     }
 
     public function lastModified(): int
@@ -74,5 +74,13 @@ class InMemoryFile
     public function visibility(): ?string
     {
         return $this->visibility;
+    }
+
+    public function withLastModified(int $lastModified): self
+    {
+        $clone = clone $this;
+        $clone->lastModified = $lastModified;
+
+        return $clone;
     }
 }
