@@ -223,12 +223,14 @@ class InMemoryFilesystemAdapter implements FilesystemAdapter
         $sourcePath = $this->preparePath($source);
         $destinationPath = $this->preparePath($destination);
 
-        if ( ! $this->fileExists($source) || $this->fileExists($destination)) {
+        if ( ! $this->fileExists($source)) {
             throw UnableToMoveFile::fromLocationTo($source, $destination);
         }
 
-        $this->files[$destinationPath] = $this->files[$sourcePath];
-        unset($this->files[$sourcePath]);
+        if ($sourcePath !== $destinationPath) {
+            $this->files[$destinationPath] = $this->files[$sourcePath];
+            unset($this->files[$sourcePath]);
+        }
 
         if ($visibility = $config->get(Config::OPTION_VISIBILITY)) {
             $this->setVisibility($destination, $visibility);

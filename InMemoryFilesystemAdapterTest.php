@@ -193,18 +193,6 @@ class InMemoryFilesystemAdapterTest extends FilesystemAdapterTestCase
     /**
      * @test
      */
-    public function moving_a_file_with_collision(): void
-    {
-        $this->expectException(UnableToMoveFile::class);
-        $adapter = $this->adapter();
-        $adapter->write('path.txt', 'contents', new Config());
-        $adapter->write('new-path.txt', 'contents', new Config());
-        $adapter->move('path.txt', 'new-path.txt', new Config());
-    }
-
-    /**
-     * @test
-     */
     public function trying_to_move_a_non_existing_file(): void
     {
         $this->expectException(UnableToMoveFile::class);
